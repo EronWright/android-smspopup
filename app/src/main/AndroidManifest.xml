@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="io.cloudbeat.smspopup">
+
+    <uses-permission android:name="android.permission.RECEIVE_SMS"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <application
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:theme="@style/Theme.AppCompat">
+
+        <activity android:name=".SMSPopup" android:taskAffinity="io.cloudbeat.smspopup.NotifySMSReceived" android:launchMode="singleInstance" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service android:name=".BackgroundService">
+            <intent-filter>
+                <action android:name="io.cloudbeat.smspopup.BackgroundService"/>
+            </intent-filter>
+        </service>
+    </application>
+</manifest>
