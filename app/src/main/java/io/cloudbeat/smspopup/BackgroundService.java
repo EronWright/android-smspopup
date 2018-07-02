@@ -14,12 +14,16 @@ import android.os.IBinder;
 import android.telephony.SmsMessage;
 import android.view.WindowManager;
 
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BackgroundService extends Service {
     private static final String ACTION = "android.provider.Telephony.SMS_RECEIVED";
     private final IBinder mBinder = new LocalBinder();
+    private final Set<AlertDialog> alerts = new HashSet<>();
 
     public class LocalBinder extends Binder {
         BackgroundService getService() {
@@ -44,6 +48,16 @@ public class BackgroundService extends Service {
     }
 
     private void displayAlert(String sms) {
+        // close any previous alerts
+        for (Iterator<AlertDialog> i = alerts.iterator(); i.hasNext();) {
+            AlertDialog dialog = i.next();
+            try {
+                dialog.cancel();
+            } catch (Exception nop) {
+            }
+            i.remove();
+        }
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(sms).setCancelable(false);
 
@@ -56,6 +70,7 @@ public class BackgroundService extends Service {
                             i.setData(Uri.parse(url));
                             startActivity(i);
                             dialog.cancel();
+                            alerts.remove(dialog);
                         }
                     });
         }
@@ -63,9 +78,11 @@ public class BackgroundService extends Service {
                 new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         dialog.cancel();
+                        alerts.remove(dialog);
                     }
                 });
         AlertDialog alert = builder.create();
+        alerts.add(alert);
         alert.getWindow().setType(WindowManager.LayoutParams.TYPE_SYSTEM_ALERT);
         alert.show();
     }
