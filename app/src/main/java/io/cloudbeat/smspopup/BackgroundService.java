@@ -38,6 +38,12 @@ public class BackgroundService extends Service {
         this.registerReceiver(smsReceiver, filter);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        this.unregisterReceiver(smsReceiver);
+    }
+
     public int onStartCommand(Intent intent, int flags, int startId) {
         return START_STICKY;
     }
