@@ -1,5 +1,6 @@
 package io.cloudbeat.smspopup;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.app.Service;
 import android.content.BroadcastReceiver;
@@ -7,6 +8,8 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Bundle;
@@ -25,6 +28,8 @@ public class BackgroundService extends Service {
     private final IBinder mBinder = new LocalBinder();
     private final Set<AlertDialog> alerts = new HashSet<>();
 
+    private MediaPlayer mediaShocking;
+
     public class LocalBinder extends Binder {
         BackgroundService getService() {
             return BackgroundService.this;
@@ -34,6 +39,9 @@ public class BackgroundService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+
+        this.mediaShocking = MediaPlayer.create(this, R.raw.shocking);
+
         IntentFilter filter = new IntentFilter(ACTION);
         this.registerReceiver(smsReceiver, filter);
     }
@@ -54,6 +62,14 @@ public class BackgroundService extends Service {
     }
 
     private void displayAlert(String sms) {
+        if (sms.contains("Tonya")) {
+            mediaShocking.start();
+        }
+
+        if (this.checkSelfPermission(Manifest.permission.SYSTEM_ALERT_WINDOW) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+
         // close any previous alerts
         for (Iterator<AlertDialog> i = alerts.iterator(); i.hasNext();) {
             AlertDialog dialog = i.next();
@@ -107,6 +123,7 @@ public class BackgroundService extends Service {
     private final BroadcastReceiver smsReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+
             String action = intent.getAction();
             if (ACTION.equals(action)) {
                 Bundle bundle = intent.getExtras();
