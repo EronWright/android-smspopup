@@ -16,9 +16,11 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.telephony.SmsMessage;
 import android.view.WindowManager;
+import com.nestandlove.sms.DeepMoji;
 
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +29,8 @@ public class BackgroundService extends Service {
     private static final String ACTION = "android.provider.Telephony.SMS_RECEIVED";
     private final IBinder mBinder = new LocalBinder();
     private final Set<AlertDialog> alerts = new HashSet<>();
+
+    private DeepMoji model;
 
     private MediaPlayer mediaShocking;
 
@@ -40,6 +44,13 @@ public class BackgroundService extends Service {
     public void onCreate() {
         super.onCreate();
 
+        try {
+            this.model = new DeepMoji(getAssets());
+        }
+        catch(Exception e) {
+            throw new RuntimeException("Unable to load DeepMoji model", e);
+        }
+
         this.mediaShocking = MediaPlayer.create(this, R.raw.shocking);
 
         IntentFilter filter = new IntentFilter(ACTION);
@@ -50,6 +61,7 @@ public class BackgroundService extends Service {
     public void onDestroy() {
         super.onDestroy();
         this.unregisterReceiver(smsReceiver);
+        this.model.close();
     }
 
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -62,7 +74,12 @@ public class BackgroundService extends Service {
     }
 
     private void displayAlert(String sms) {
-        if (sms.contains("Tonya")) {
+
+        List<DeepMoji.Scored> scored = model.score(sms);
+        if (scored.size() != 1) return;
+        DeepMoji.Prediction prediction = scored.get(0).getPredictions().get(0);
+
+        if (prediction.score > 0.1) {
             mediaShocking.start();
         }
 
